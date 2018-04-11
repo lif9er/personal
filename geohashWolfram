@@ -1,0 +1,38 @@
+home = FindGeoLocation[];
+date = DateString[If[home[[1, 2]] > -30,
+    DatePlus[-1],
+    DateString[]],
+   {"Year",
+    "/",
+    "Month",
+    "/",
+    "Day"}];
+dj = URLFetch["http://carabiner.peeron.com/xkcd/map/data/" <> date];
+str = StringJoin[{DateString[{"Year",
+      "-",
+      "Month",
+      "-",
+      "Day",
+      "-"}],
+    dj}];
+hsh = RealDigits[Hash[str,
+     "MD5"],
+    16][[1]];
+ConstantArray[0,
+   32 - Length[hsh]]~Join~hsh;
+{xhex, yhex} = Partition[hsh, 16];
+{xhex,
+   yhex} = (Prepend[#, 0] & /@ {xhex, yhex});
+{x,
+   y} = (FromDigits[{#,
+       1},
+      16] & /@ {xhex,
+     yhex});
+x = N[x];
+y = N[y];
+coords = GeoPosition[Sign[#] (Abs[#] + {x,
+         y}) &[IntegerPart /@ (home[[1]])] // N]
+         
+td = TravelDirections[{home, coords}];
+GeoGraphics[Style[Line[td], Thick, Blue]]
+{td["TravelTime"], td["TravelDistance"]}         
